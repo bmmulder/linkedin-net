@@ -86,13 +86,11 @@ The above code store access token in the database only if it doesn't exist for t
 If you have followed all the above steps, it is just a matter of few lines of code to make API calls such as retrieving user's LinkedIn profile information. You need to first import the following namespaces:
 
 ```
-'...
 using Microsoft.Owin.Security;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using LinkedIn.Api.Client.Owin;
 using LinkedIn.Api.Client.Owin.Profiles;
-'...
 ```
 
 Next, you need to get the LinkedIn access token:
