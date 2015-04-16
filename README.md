@@ -34,7 +34,33 @@ Go to http://www.nuget.org/packages/LinkedIn for more information about the Nuge
 
 In the <strong>ConfigureAuth</strong> method of the <strong>Startup</strong> partial class in your web project, you need to tell Owin that you want to access a LinkedIn user's access token once the user is successfully authenticated with LinkedIn. You can achieve this by the following code:
 
-<script src="https://gist.github.com/tanveery/9955774e1f9fcd2a1673.js"></script>
+'''
+```
+public void ConfigureAuth(IAppBuilder app)
+{
+  //...
+  var linkedInOptions = new LinkedInAuthenticationOptions();
+
+  linkedInOptions.ClientId = "Your LinkedIn API Key";
+  linkedInOptions.ClientSecret = "Your LinkedIn Secret Key";
+  
+  linkedInOptions.Scope.Add("r_fullprofile");
+  
+  linkedInOptions.Provider = new LinkedInAuthenticationProvider()
+  {
+    OnAuthenticated = async context =>
+    {
+      context.Identity.AddClaim(new System.Security.Claims.Claim("LinkedIn_AccessToken", context.AccessToken));
+    }
+  };
+
+  linkedInOptions.SignInAsAuthenticationType = DefaultAuthenticationTypes.ExternalCookie;
+
+  app.UseLinkedInAuthentication(linkedInOptions);
+  //...
+}
+```
+'''
 
 <h2>Store LinkedIn Access Token in the Identity Database</h2>
 
