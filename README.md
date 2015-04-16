@@ -34,31 +34,8 @@ Go to http://www.nuget.org/packages/LinkedIn for more information about the Nuge
 
 In the <strong>ConfigureAuth</strong> method of the <strong>Startup</strong> partial class in your web project, you need to tell Owin that you want to access a LinkedIn user's access token once the user is successfully authenticated with LinkedIn. You can achieve this by the following code:
 
-```
-public void ConfigureAuth(IAppBuilder app)
-{
-  '...
-  var linkedInOptions = new LinkedInAuthenticationOptions();
+<script src="https://gist.github.com/tanveery/9955774e1f9fcd2a1673.js"></script>
 
-  linkedInOptions.ClientId = "Your LinkedIn API Key";
-  linkedInOptions.ClientSecret = "Your LinkedIn Secret Key";
-  
-  linkedInOptions.Scope.Add("r_fullprofile");
-  
-  linkedInOptions.Provider = new LinkedInAuthenticationProvider()
-  {
-    OnAuthenticated = async context =>
-    {
-      context.Identity.AddClaim(new System.Security.Claims.Claim("LinkedIn_AccessToken", context.AccessToken));
-    }
-  };
-
-  linkedInOptions.SignInAsAuthenticationType = DefaultAuthenticationTypes.ExternalCookie;
-
-  app.UseLinkedInAuthentication(linkedInOptions);
-  '...
-}
-```
 <h2>Store LinkedIn Access Token in the Identity Database</h2>
 
 One last step before you would be ready to make API calls. You need to store user's access token in your Identity database. You need to do this when the external login provider (in this case LinkedIn) redirects to your application after successful login. Typically its the <strong>ExternalLoginCallback</strong> action method of the <strong>AccountController</strong> class. You can store access token in the Identity database using the following code:
