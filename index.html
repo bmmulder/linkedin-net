@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Linkedin for .NET by tanveery</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Linkedin for .NET</h1>
+      <h2 class="project-tagline">A robust and clean library for making LinkedIn API calls in Microsoft .NET application.</h2>
+      <a href="https://github.com/tanveery/linkedin-net" class="btn">View on GitHub</a>
+      <a href="https://github.com/tanveery/linkedin-net/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/tanveery/linkedin-net/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="linkedin-apis-for-net" class="anchor" href="#linkedin-apis-for-net" aria-hidden="true"><span class="octicon octicon-link"></span></a>LinkedIn APIs for .NET</h1>
+
+<p>LinkedIn APIs for .NET is a robust and clean library that allows a developer to easily make LinkedIn API calls in Microsoft .NET application. The library is built on top of the Owin framework which means integration with LinkedIn external login provider comes out of the box. In other words, logging with LinkedIn works the same way as it works with the default login providers like Facebook, Google, and Twitter.</p>
+
+<p>The current version of the library provides the following functionality:</p>
+
+<ul>
+<li>Seamless integration with ASP.NET identity management.</li>
+<li>Retrieve basic profile of a LinkedIn user.</li>
+<li>Retrieve full profile of a LinkedIn user.</li>
+</ul>
+
+<h2>
+<a id="visual-studio-project-support" class="anchor" href="#visual-studio-project-support" aria-hidden="true"><span class="octicon octicon-link"></span></a>Visual Studio Project Support</h2>
+
+<p>You can use LinkedIn APIs for .NET either in ASP.NET Web Forms or in ASP.NET MVC project. However, the library as of now has been tested only in ASP.NET MVC 5 with .NET Framework 4.5.</p>
+
+<h2>
+<a id="registering-your-linkedin-app" class="anchor" href="#registering-your-linkedin-app" aria-hidden="true"><span class="octicon octicon-link"></span></a>Registering Your LinkedIn App</h2>
+
+<p>You must have unique set of API Key and Secret Key to make the API calls. In order to get the API Key and the Secret Key, you need to register a LinkedIn app using your own LinkedIn account. Or someone else can register the LinkedIn app for you and then share the details with you.</p>
+
+<p><a href="https://www.linkedin.com/secure/developer?newapp=">https://www.linkedin.com/secure/developer?newapp=</a></p>
+
+<p>Ensure that you enter http://rootpath/signin-linkedin in the OAuth 2.0 Redirect URLs field where rootpath is the root path of your web application. Typically it would be your localhost during development and later on the actual public domain once you publish your web application. Example value for OAuth 2.0 Redirect URLs could be: http://localhost:18991/signin-linkedin. Keep in mind that you would be able to make API calls only from the application whose root path matches with the root path specified in the OAuth 2.0 Redirect URLs field. Of course, you can always change the value whenever you need to.
+Once you are done with registering your LinkedIn app, you will get your API Key and Secret Key.</p>
+
+<h2>
+<a id="installing-linkedin-apis-for-net-package-in-your-project" class="anchor" href="#installing-linkedin-apis-for-net-package-in-your-project" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installing LinkedIn APIs for .NET Package in Your Project</h2>
+
+<p>The best and the recommended way to install the latest version of LinkedIn APIs for .NET in your Visual Studio project is through Nuget. From the Nuget's Package Manager Console in your Visual Studio .NET, simply execute the following command:</p>
+
+<pre><code>Install-Package LinkedIn
+</code></pre>
+
+<p>Go to <a href="http://www.nuget.org/packages/LinkedIn">http://www.nuget.org/packages/LinkedIn</a> for more information about the Nuget package.</p>
+
+<h2>
+<a id="configure-linkedin-options-in-the-startup-class" class="anchor" href="#configure-linkedin-options-in-the-startup-class" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configure LinkedIn Options in the Startup Class</h2>
+
+<p>In the <strong>ConfigureAuth</strong> method of the <strong>Startup</strong> partial class in your web project, you need to tell Owin that you want to access a LinkedIn user's access token once the user is successfully authenticated with LinkedIn. You can achieve this by the following code:</p>
+
+<p>'''</p>
+
+<pre><code>public void ConfigureAuth(IAppBuilder app)
+{
+  //...
+  var linkedInOptions = new LinkedInAuthenticationOptions();
+
+  linkedInOptions.ClientId = "Your LinkedIn API Key";
+  linkedInOptions.ClientSecret = "Your LinkedIn Secret Key";
+
+  linkedInOptions.Scope.Add("r_fullprofile");
+
+  linkedInOptions.Provider = new LinkedInAuthenticationProvider()
+  {
+    OnAuthenticated = async context =&gt;
+    {
+      context.Identity.AddClaim(new System.Security.Claims.Claim("LinkedIn_AccessToken", context.AccessToken));
+    }
+  };
+
+  linkedInOptions.SignInAsAuthenticationType = DefaultAuthenticationTypes.ExternalCookie;
+
+  app.UseLinkedInAuthentication(linkedInOptions);
+  //...
+}
+</code></pre>
+
+<p>'''</p>
+
+<h2>
+<a id="store-linkedin-access-token-in-the-identity-database" class="anchor" href="#store-linkedin-access-token-in-the-identity-database" aria-hidden="true"><span class="octicon octicon-link"></span></a>Store LinkedIn Access Token in the Identity Database</h2>
+
+<p>One last step before you would be ready to make API calls. You need to store user's access token in your Identity database. You need to do this when the external login provider (in this case LinkedIn) redirects to your application after successful login. Typically its the <strong>ExternalLoginCallback</strong> action method of the <strong>AccountController</strong> class. You can store access token in the Identity database using the following code:</p>
+
+<pre><code>var claimsIdentity = await AuthenticationManager.GetExternalIdentityAsync(DefaultAuthenticationTypes.ExternalCookie);
+
+if (claimsIdentity != null)
+{
+  var currentClaims = await UserManager.GetClaimsAsync(user.Id);
+  var accessToken = claimsIdentity.FindAll(loginProvider + "_AccessToken").First();
+
+  if (currentClaims.Count() &lt;= 0)
+  {
+    await UserManager.AddClaimAsync(user.Id, accessToken);
+  }
+}
+</code></pre>
+
+<p>The above code store access token in the database only if it doesn't exist for the user.</p>
+
+<p></p><h2>
+<a id="get-profile-information" class="anchor" href="#get-profile-information" aria-hidden="true"><span class="octicon octicon-link"></span></a>Get Profile Information
+
+</h2><p>If you have followed all the above steps, it is just a matter of few lines of code to make API calls such as retrieving user's LinkedIn profile information. You need to first import the following namespaces:</p>
+
+<pre><code>using Microsoft.Owin.Security;
+using Microsoft.AspNet.Identity;
+using Microsoft.AspNet.Identity.Owin;
+using LinkedIn.Api.Client.Owin;
+using LinkedIn.Api.Client.Owin.Profiles;
+</code></pre>
+
+<p>Next, you need to get the LinkedIn access token:</p>
+
+<pre><code>var am = HttpContext.GetOwinContext().GetUserManager&lt;ApplicationUserManager&gt;();
+var user = am.FindById(this.User.Identity.GetUserId());
+var claim = user.Claims.ToList().Where(m =&gt; m.ClaimType == "LinkedIn_AccessToken").SingleOrDefault();
+</code></pre>
+
+<p>Once you have the access token, you can use the following code to get the LinkedIn user's full profile:</p>
+
+<pre><code>var client = new LinkedInApiClient(HttpContext.GetOwinContext().Request, claim.ClaimValue);
+var profileApi = new LinkedInProfileApi(client);
+var userProfile = await profileApi.GetFullProfileAsync();
+</code></pre>
+
+<p>If you are just interested in the basic profile, you can call the <strong>GetBasicProfileAsync()</strong> method instead. The <strong>GetBasicProfileAsync()</strong> method returns an instance of the <strong>LinkedInBasicProfile</strong> class while <strong>GetFullProfileAsync()</strong> returns an instance of the <strong>LinkedInFullProfile</strong> class. The <strong>LinkedInFullProfile</strong> class inherits from the <strong>LinkedInBasicProfile</strong> class.</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/tanveery/linkedin-net">Linkedin for .NET</a> is maintained by <a href="https://github.com/tanveery">tanveery</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
+
